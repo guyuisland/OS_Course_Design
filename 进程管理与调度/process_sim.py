@@ -32,9 +32,10 @@ def move_from_running_to_waiting(pid, running_dict, waiting_dict):
     if pid in running_dict:
         waiting_dict[pid] = running_dict[pid]
         del(running_dict[pid])
-        choose_to_run()
+        pid_ret = choose_to_run()
     else:
         print('move_from_running_to_waiting ERROR')
+        return pid_ret
 
 
 def move_from_waiting_to_ready(pid, waiting_dict, ready_dict):
@@ -45,8 +46,8 @@ def move_from_waiting_to_ready(pid, waiting_dict, ready_dict):
         print('move_from_waiting_to_ready ERROR')
 
 
-def move_from_new_to_ready(pid, priority, ready_dict):
-    ready_dict[pid] = [0, priority]  # 等待时间，优先级
+def move_from_new_to_ready(pid, priority, burst_time, ready_dict):
+    ready_dict[pid] = [0, priority, burst_time]  # 等待时间，优先级
 
 
 def move_from_running_to_ready(pid, running_dict, ready_dict):
@@ -78,6 +79,32 @@ def move_to_terminated(pid, ready_dict, running_dict, waiting_dict):
         print('move_to_terminated ERROR')
 
 
+def choose_to_run():
+    """
+    ready_dict[pid] = [0(waited time), priority, burst_time] 
+    1. Check if there is any process has waited in ready_dict for too long
+        1.1 If no then go to 2
+        1.2 If yes then choose the process that has waited for longest time
+    2. Find the process with highest priority
+        2.1 If the there are multiple processes with the same priority goto 3
+        2.2 If only one process has the highest priority then choose it
+    3. HRRN: choose the process with maximum 1 + (wait time / burst time)
+    """
+
+    time_threshold = 10  # decide whether a process has been waited for too long
+
+    if max(ready_dict.values()) >= time_threshold:
+        ret_pid = max(ready_dict.items(), key=lambda x: x[1][0])
+    else:
+        tmpDict = ready_dict.items()
+        tmpDict.sort(key=lambda x: (x[1][1], -(1 + x[1][0] / x[1][2])))
+        ret_pid = tmpDict[0][0]
+
+    ready_dict[ret_pid][0] = 0  # set the chosen process waited time to zero
+
+    return ret_pid
+
+
 def deal_message(message):
     ret_message = []  # 返回消息
     if message[0] == "REQ":  # 消息类型为请求
@@ -91,7 +118,7 @@ def deal_message(message):
             ret_message.append(message[5])
             # message:[REQ][PROCESS][MEMORY][CREATE_PROCESS_MEMORY][0x00000000][uipid]
 
-        if message[3] == "MOVE_QUEUE":  # 消息类型为将进程从running移动到某个状态
+        if message[3] == "MOVE_QUEUE":  # 消息类型为将进程移动到某个状态
             # message:[REQ][*][PROCESS][MOVE_QUEUE][pid][s_state][d_state]
             pid = message[4]
             if message[5] == 'RUNNING' and message[6] == 'READY':
@@ -99,11 +126,18 @@ def deal_message(message):
                     pid, running_dict, ready_dict)
 
             elif message[5] == 'RUNNING' and message[6] == 'WAITING':
-                move_from_running_to_waiting(pid, running_dict, waiting_dict)
+                pid_ret = move_from_running_to_waiting(
+                    pid, running_dict, waiting_dict)
             elif message[5] == 'WAITING' and message[6] == 'READY':
                 move_from_waiting_to_ready(pid, waiting_dict, ready_dict)
             else:
                 print("WRONGLY MOVE QUEUE!")
+
+            ret_message.append("RES")  # return REQ
+            ret_message.append("PROCESS")
+            ret_message.append("KERNEL")  # 消息目的为kernel
+            ret_message.append("MOVE_QUEUE")
+            ret_message.append(pid_ret)
 
         if message[3] == "TERMINATE_PROCESS":  # 消息类型为kernel崩掉某个进程
             # message:[REQ][*][PROCESS][TERMINATE_PROCESS][pid]
@@ -113,12 +147,13 @@ def deal_message(message):
     if message[0] == "RES":
         if message[3] == "CREATE_PROCESS":  # 响应请求创建进程
             if message[4] == "SUCCESS":  # 内存创建进程成功
-                # message:[RES][*][PROCESS][CREATE_PROCESS][SUCCESS][pid][priority][uipid]
+                # message:[RES][*][PROCESS][CREATE_PROCESS][SUCCESS][pid][priority][burst_time][uipid]
                 pid = message[5]
                 priority = message[6]
-                uipid = message[7]
+                burst_time = message[7]
+                uipid = message[8]
                 # 队列里面的信息包括pid, 进程优先级，等待时间(int计数方式)
-                move_from_new_to_ready(pid, priority, ready_dict)
+                move_from_new_to_ready(pid, priority, burst_time, ready_dict)
 
                 ret_message.append("RES")  # 返回消息类型为请求
                 ret_message.append("PROCESS")  # 返回消息的消息源是PROCESS
@@ -137,6 +172,19 @@ def deal_message(message):
     # 消息加编号
 
 
+def send_state_to_UI():
+    ret_message = []
+    ret_message.append("RES")
+    ret_message.append("PROCESS")
+    ret_message.append("UI")
+    ret_message.append("PROCESSSTATE")
+    ret_message.append(ready_dict)
+    ret_message.append(waiting_dict)
+    ret_message.append(running_dict)
+    # message:[RES][PROCESS][UI][PROCESSSTATE][ready_dict][waiting_dict][running_dict]
+    return ret_message
+
+
 def start_process(Kernel2Process, Process2Kernel):
     while (1):
         time.sleep(1)
@@ -144,4 +192,6 @@ def start_process(Kernel2Process, Process2Kernel):
         if Kernel2Process.qsize() != 0:
             message = Kernel2Process.get()
             ret_message = deal_message(message)
+            ui_message = send_state_to_UI()
             Process2Kernel.put(ret_message)
+            Process2Kernel.put(ui_message)
