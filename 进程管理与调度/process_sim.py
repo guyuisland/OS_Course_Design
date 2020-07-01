@@ -107,7 +107,7 @@ def choose_to_run():
 
 def update_waited_time():  # 更新ready队列中进程等待时间
     for process in ready_dict:
-        process[0] += 1
+        ready_dict[process][0] = ready_dict[process][0] + 1
 
 
 def deal_message(message):
@@ -120,16 +120,15 @@ def deal_message(message):
             ret_message.append("MEMORY")  # 返回消息的消息目的是MEMORY
             ret_message.append("CREATE_PROCESS_MEMORY")  # 请求MEMORY分配内存
             ret_message.append(message[4])  # 程序在内存中的首地址
-            ret_message.append(message[5])
+            ret_message.append(message[5])  # UI中的pid
             # message:[REQ][PROCESS][MEMORY][CREATE_PROCESS_MEMORY][0x00000000][uipid]
 
-        if message[3] == "MOVE_QUEUE":  # 消息类型为将进程移动到某个状态
+        elif message[3] == "MOVE_QUEUE":  # 消息类型为将进程移动到某个状态
             # message:[REQ][*][PROCESS][MOVE_QUEUE][pid][s_state][d_state]
             pid = message[4]
             if message[5] == 'RUNNING' and message[6] == 'READY':
                 pid_ret = move_from_running_to_ready(
                     pid, running_dict, ready_dict)
-
             elif message[5] == 'RUNNING' and message[6] == 'WAITING':
                 pid_ret = move_from_running_to_waiting(
                     pid, running_dict, waiting_dict)
@@ -145,12 +144,12 @@ def deal_message(message):
             ret_message.append(pid_ret)
             # message:[RES][PROCESS][KERNEL][MOVE_QUEUE][pid_ret]
 
-        if message[3] == "TERMINATE_PROCESS":  # 消息类型为kernel崩掉某个进程
+        elif message[3] == "TERMINATE_PROCESS":  # 消息类型为kernel崩掉某个进程
             # message:[REQ][*][PROCESS][TERMINATE_PROCESS][pid]
             pid = message[4]
             move_to_terminated(pid, ready_dict, running_dict, waiting_dict)
 
-    if message[0] == "RES":
+    elif message[0] == "RES":
         if message[3] == "CREATE_PROCESS":  # 响应请求创建进程
             if message[4] == "SUCCESS":  # 内存创建进程成功
                 # message:[RES][*][PROCESS][CREATE_PROCESS][SUCCESS][pid][priority][burst_time][uipid]
@@ -163,12 +162,14 @@ def deal_message(message):
 
                 ret_message.append("RES")  # 返回消息类型为请求
                 ret_message.append("PROCESS")  # 返回消息的消息源是PROCESS
-                ret_message.append("KERNEL")  # 返回消息的消息目的是KERNEL
+                ret_message.append("UI")  # 返回消息的消息目的是KERNEL
                 ret_message.append("CREATE_PROCESS")  # 进程创建成功
+                ret_message.append("SUCCESS")
+                ret_message.append(pid)
                 ret_message.append(uipid)  # 消息对应的序号
-                # message:[RES][PROCESS][KERNEL][CREATE_PROCESS_UI_SUCCESS][SUCCESS][pid][priority][uipid]
+                # message:[RES][PROCESS][UI][CREATE_PROCESS][SUCCESS][pid][uipid]
 
-            if message[4] == "FAIL":
+            elif message[4] == "FAIL":
                 ret_message.append("RES")  # 返回消息类型为请求
                 ret_message.append("PROCESS")  # 返回消息的消息源是PROCESS
                 ret_message.append("UI")  # 返回消息的消息目的是UI
