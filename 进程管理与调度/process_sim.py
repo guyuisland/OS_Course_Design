@@ -32,10 +32,8 @@ def move_from_running_to_waiting(pid, running_dict, waiting_dict):
     if pid in running_dict:
         waiting_dict[pid] = running_dict[pid]
         del(running_dict[pid])
-        pid_ret = choose_to_run()
     else:
         print('move_from_running_to_waiting ERROR')
-        return pid_ret
 
 
 def move_from_waiting_to_ready(pid, waiting_dict, ready_dict):
@@ -54,10 +52,8 @@ def move_from_running_to_ready(pid, running_dict, ready_dict):
     if pid in running_dict:
         ready_dict[pid] = running_dict[pid]
         del(running_dict[pid])
-        pid_ret = choose_to_run()
     else:
         print('move_from_running_to_ready ERROR')
-    return pid_ret
 
 
 def move_from_ready_to_running(pid, ready_dict, running_dict):
@@ -68,18 +64,34 @@ def move_from_ready_to_running(pid, ready_dict, running_dict):
         print('move_from_ready_to_running ERROR')
 
 
+# def move_to_running(pid, running_dict):
+#     for process in running_dict:
+#         del(running_dict[process])
+#     running_dict[pid] = ready_dict[pid]
+#     del(ready_dict[pid])
+
+
 def move_to_terminated(pid, ready_dict, running_dict, waiting_dict):
+    ret_msg = [pid]
     if pid in ready_dict:
-        del(ready_dict[pid])
+        del (ready_dict[pid])
+        ret_msg.append("SUCCESS")
     elif pid in running_dict:
-        del(running_dict[pid])
+        del (running_dict[pid])
+        pid_ret = choose_to_run(ready_dict)
+        ret_msg[0] = (pid_ret)
+        ret_msg.append("SUCCESS")
     elif pid in waiting_dict:
-        del(waiting_dict[pid])
+        del (waiting_dict[pid])
+        ret_msg.append("SUCCESS")
     else:
         print('move_to_terminated ERROR')
+        ret_msg.append("FAILED")
+
+    return ret_msg
 
 
-def choose_to_run():
+def choose_to_run(ready_dict):
     """
     ready_dict[pid] = [0(waited time), priority, burst_time] 
     1. Check if there is any process has waited in ready_dict for too long
@@ -93,11 +105,11 @@ def choose_to_run():
 
     time_threshold = 10  # decide whether a process has been waited for too long
 
-    if max(ready_dict.values()) >= time_threshold:
-        ret_pid = max(ready_dict.items(), key=lambda x: x[1][0])
+    if max(ready_dict.items(), key=lambda x: x[1][0])[1][0] >= time_threshold:
+        ret_pid = max(ready_dict.items(), key=lambda x: x[1][0])[0]
     else:
-        tmpDict = ready_dict.items()
-        tmpDict.sort(key=lambda x: (x[1][1], -(1 + x[1][0] / x[1][2])))
+        tmpDict = sorted(ready_dict.items(),
+                         key=lambda x: (-x[1][1], -(1 + x[1][0] / x[1][2])))
         ret_pid = tmpDict[0][0]
 
     ready_dict[ret_pid][0] = 0  # set the chosen process waited time to zero
@@ -108,6 +120,11 @@ def choose_to_run():
 def update_waited_time():  # 更新ready队列中进程等待时间
     for process in ready_dict:
         ready_dict[process][0] = ready_dict[process][0] + 1
+
+
+def update_burst_time():  # 更新 bursttime
+    for process in running_dict:
+        running_dict[process][2] -= 1
 
 
 def deal_message(message):
@@ -126,14 +143,20 @@ def deal_message(message):
         elif message[3] == "MOVE_QUEUE":  # 消息类型为将进程移动到某个状态
             # message:[REQ][*][PROCESS][MOVE_QUEUE][pid][s_state][d_state]
             pid = message[4]
+            pid_ret = pid  # set pid as default pid_ret
             if message[5] == 'RUNNING' and message[6] == 'READY':
-                pid_ret = move_from_running_to_ready(
-                    pid, running_dict, ready_dict)
+                move_from_running_to_ready(pid, running_dict, ready_dict)
+                pid_ret = choose_to_run(ready_dict)
+                move_from_ready_to_running(pid_ret, ready_dict, running_dict)
             elif message[5] == 'RUNNING' and message[6] == 'WAITING':
-                pid_ret = move_from_running_to_waiting(
-                    pid, running_dict, waiting_dict)
+                move_from_running_to_waiting(pid, running_dict, waiting_dict)
+                pid_ret = choose_to_run(ready_dict)
+                move_from_ready_to_running(pid_ret, ready_dict, running_dict)
             elif message[5] == 'WAITING' and message[6] == 'READY':
                 move_from_waiting_to_ready(pid, waiting_dict, ready_dict)
+            elif pid == "" and message[6] == "RUNNING":
+                pid_ret = choose_to_run(ready_dict)
+                move_from_ready_to_running(pid_ret, ready_dict, running_dict)
             else:
                 print("WRONGLY MOVE QUEUE!")
 
@@ -147,7 +170,15 @@ def deal_message(message):
         elif message[3] == "TERMINATE_PROCESS":  # 消息类型为kernel崩掉某个进程
             # message:[REQ][*][PROCESS][TERMINATE_PROCESS][pid]
             pid = message[4]
-            move_to_terminated(pid, ready_dict, running_dict, waiting_dict)
+            ret_list = move_to_terminated(
+                pid, ready_dict, running_dict, waiting_dict)
+            ret_message.append("RES")
+            ret_message.append("PROCESS")
+            ret_message.append("KERNEL")
+            ret_message.append("TERMINATE_PROCESS")
+            ret_message.append(ret_list[1])  # success or failed
+            # default: pid, or pid of now running process
+            ret_message.append(ret_list[0])
 
     elif message[0] == "RES":
         if message[3] == "CREATE_PROCESS":  # 响应请求创建进程
@@ -198,6 +229,7 @@ def start_process(Kernel2Process, Process2Kernel, ProcessTime):
         print("A")
         while Kernel2Process.qsize() != 0:
             message = Kernel2Process.get()
+            update_burst_time()
             ret_message = deal_message(message)
             update_waited_time()
             ui_message = send_state_to_UI()
