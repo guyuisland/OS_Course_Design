@@ -138,6 +138,7 @@ def deal_message(message):
             ret_message.append("KERNEL")  # 消息目的为kernel
             ret_message.append("MOVE_QUEUE")
             ret_message.append(pid_ret)
+            # message:[RES][PROCESS][KERNEL][MOVE_QUEUE][pid_ret]
 
         if message[3] == "TERMINATE_PROCESS":  # 消息类型为kernel崩掉某个进程
             # message:[REQ][*][PROCESS][TERMINATE_PROCESS][pid]
@@ -185,11 +186,11 @@ def send_state_to_UI():
     return ret_message
 
 
-def start_process(Kernel2Process, Process2Kernel):
+def start_process(Kernel2Process, Process2Kernel, ProcessTime):
     while (1):
-        time.sleep(1)
-        # print("A")
-        if Kernel2Process.qsize() != 0:
+        ProcessTime.get()
+        print("A")
+        while Kernel2Process.qsize() != 0:
             message = Kernel2Process.get()
             ret_message = deal_message(message)
             ui_message = send_state_to_UI()

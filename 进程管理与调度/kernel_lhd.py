@@ -29,14 +29,16 @@ def code_sim(code, code_num):
 if __name__ == "__main__":
     Kernel2Process = Queue()
     Process2Kernel = Queue()
+    ProcessTime = Queue()
     p = Process(target=process_sim.start_process,
-                args=(Kernel2Process, Process2Kernel,))
+                args=(Kernel2Process, Process2Kernel, ProcessTime,))
     p.start()
     i = 0
     while(1):
-        message = ["REQ", "MEMORY", "PROCESS", "CREATE_PROCESS", 50]
-        Kernel2Process.put(message)
         time.sleep(1)
+        ProcessTime.put(1)
+        message = ["REQ", "MEMORY", "PROCESS", "CREATE_PROCESS", 0x00000000, 2]
+        Kernel2Process.put(message)
         ret = Process2Kernel.get()
         # i += 1
         print(ret[4])
