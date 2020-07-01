@@ -105,6 +105,11 @@ def choose_to_run():
     return ret_pid
 
 
+def update_waited_time():  # 更新ready队列中进程等待时间
+    for process in ready_dict:
+        process[0] += 1
+
+
 def deal_message(message):
     ret_message = []  # 返回消息
     if message[0] == "REQ":  # 消息类型为请求
@@ -193,6 +198,7 @@ def start_process(Kernel2Process, Process2Kernel, ProcessTime):
         while Kernel2Process.qsize() != 0:
             message = Kernel2Process.get()
             ret_message = deal_message(message)
+            update_waited_time()
             ui_message = send_state_to_UI()
             Process2Kernel.put(ret_message)
             Process2Kernel.put(ui_message)
