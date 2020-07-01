@@ -1,8 +1,8 @@
 import time
-PROCESS_MAXNUM = 0  # 最多100个进程
-ready_dict = {}
-running_dict = {}
-waiting_dict = {}
+
+ready_dict = {}  # ready队列
+running_dict = {}  # running队列
+waiting_dict = {}  # waiting队列
 
 
 class PCB:
