@@ -37,10 +37,13 @@ if __name__ == "__main__":
     message = []
     message.append(["REQ", "*", "PROCESS", "CREATE_PROCESS", 0x00000000, 2])
     message.append(["RES", "MEMORY", "PROCESS", "CREATE_PROCESS", "SUCCESS", 2, 5, 20, 2])
+
     message.append(["REQ", "*", "PROCESS", "CREATE_PROCESS", 0x00000001, 3])
     message.append(["RES", "MEMORY", "PROCESS", "CREATE_PROCESS", "SUCCESS", 3, 6, 20, 3])
+
     message.append(["REQ", "*", "PROCESS", "CREATE_PROCESS", 0x00000002, 4])
     message.append(["RES", "MEMORY", "PROCESS", "CREATE_PROCESS", "SUCCESS", 4, 5, 20, 4])
+    
     message.append(["REQ", "KERNEL", "PROCESS", "MOVE_QUEUE", 2, "RUNNING", "READY"])
     while(1):
         time.sleep(1)
