@@ -1,3 +1,7 @@
+"""
+GUI部分入口，启动函数见末尾
+"""
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import pyqtSignal,QThread
 from OS_gui import Ui_MainWindow
@@ -105,6 +109,8 @@ class gui(QMainWindow,Ui_MainWindow):
             self.ram_fresh(message)
         elif message[3] == 'CREATE_PROCESS':
             self.process_create(message)
+        elif message[3] == 'RUN_FILE':
+            self.run_file_res(message)
         elif message[3] == 'PWD':
             self.file_pwd_res(message)
         elif message[3] == 'LS':
@@ -197,6 +203,15 @@ class gui(QMainWindow,Ui_MainWindow):
             self.uipid += 1
         except:
             return
+
+    def run_file_res(self,message):
+        name = message[4]
+        uipid = message[5]
+        res = message[6]
+        if res == "FAIL":
+            del self.process_map[uipid]
+            QMessageBox.about ( self, "执行", '打开' + name + '时失败' )
+
 
     def process_fresh(self,message):
         self.process_ship()
