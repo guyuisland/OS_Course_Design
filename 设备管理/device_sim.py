@@ -285,10 +285,15 @@ def deviceMain(deviceToKernelMess, deviceToUIMess, kernelToDeviceMess, guiToDevi
                             # time_startDevice = time.perf_counter()  # 更新设备开始时间
                             print("### interrupt ### stop device: " + str(line))
 
-                            # TODO 更新设备状态
+                            # TODO 更新设备状态 发送给ui
                             ret_mess_device = ["INFO", "DEVICE", "UI", "DEVICE_UPDATE", "INTTERUPT"]
                             ret_mess_device.append(char_device)
                             deviceToUIMess.put(ret_mess_device)
+
+                            #TODO 告知kernel设备中断
+                            ret_mess_device = ['RES', 'DEVICE', 'KERNEL', 'INTERRUPT_DEVICE']
+                            ret_mess_device.append(char_device)
+                            deviceToKernelMess.put(ret_mess_device)
 
                         break
 
@@ -316,7 +321,7 @@ def deviceMain(deviceToKernelMess, deviceToUIMess, kernelToDeviceMess, guiToDevi
                     ret_mess_device.append(char_device)
                     deviceToUIMess.put(ret_mess_device)
 
-                    print("### recover device success: " + str(list_deviceTable))
+                    #print("### recover device success: " + str(list_deviceTable))
                     bool_waitRecover = False
                 # else:  # 更新IO通道
                 #     ret_mess_device = ["REQ", "IO_STATE"]

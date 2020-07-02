@@ -13,8 +13,9 @@ deviceTimer = Queue()
 
 check = [
     ['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'WAIT'],
+    ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'L'],
     ['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'RUN'],
-    ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'K', 0, 3, 9.2],
+    ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'L', 0, 3, 9.2],
     ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'L'],
     ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'T'],
     ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'M', 1, 1, 12.1],
