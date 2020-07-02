@@ -149,6 +149,7 @@ def dealDeviceMess(dealMess):
     elif dealMess[0] == "RES":
         if dealMess[3] == "DISK_STATE":
             # 更新磁盘状态
+            #发送给GUI
             resMess.append("INFO")
             resMess.append("DEVICE")
             resMess.append("GUI")
@@ -209,14 +210,15 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
         global bool_waitRecover
         global bool_interruptState
 
-        # TODO 磁盘状态更新 每个时间片更新一次
+        #TODO 存储管理部分每个时间片直接发送应答结果，不需要请求消息
+        '''# TODO 磁盘状态更新 每个时间片更新一次
         # 更新磁盘
         # if (time_end - time_startDisk) > 3.00 and bool_interruptState == False:
         if bool_timerUp == True and bool_interruptState == False:
             ret_mess_device = ["REQ", "DEVICE", "KERNEL", "DISK_STATE"]
             deviceToKernelMess.put(ret_mess_device)
             # bool_diskUse = diskQuery()
-            # time_startDisk = time.perf_counter()
+            # time_startDisk = time.perf_counter()'''
 
         '''# TODO 去掉更新IO通道
         # TODO IO通道状态每隔1s更新一次（中断未发生时）
