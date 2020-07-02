@@ -31,11 +31,12 @@ if __name__ == "__main__":
     p = Process(target=memory_sim.start_memory,
                         args=(Kernel2Memory, Memory2Kernel, MemoryTime,))
     p.start()
-    
     i = 0
     testMessage = []
     testMessage.append(["REQ",'FILESYSTEM','MEMORY','LOAD','EXEC','a',1,-1,-1,[0,3]])
     testMessage.append(["REQ",'PROCESS','MEMORY','CREATE_PROCESS_MEMORY',0,1])
+
+
     testMessage.append(["REQ",'FILESYSTEM','MEMORY','LOAD','EXEC','a',2,-1,-1,[0,3]])
     testMessage.append(["REQ",'PROCESS','MEMORY','CREATE_PROCESS_MEMORY',10,2])
     testMessage.append(["REQ",'KERNEL','MEMORY','MODIFY_STATE',1,"ready","running"])
@@ -45,6 +46,8 @@ if __name__ == "__main__":
     testMessage.append(["REQ",'KERNEL','MEMORY','INSTRUCTION_FETCH',1])
     testMessage.append(["REQ",'KERNEL','MEMORY','INSTRUCTION_FETCH',1])
     testMessage.append(["REQ",'KERNEL','MEMORY','INSTRUCTION_FETCH',1])
+    testMessage.append(["REQ",'FILESYSTEM','MEMORY','WRITE','B',5,3,'add',{}])
+    testMessage.append(["REQ",'FILESYSTEM','MEMORY','LOAD','COMMOM','a',-1,3,4,[]])
 
     # 测试读COMMOM文件和写文件(指令)
     # 读：[REQ][FILESYSTEM][MEMORY][LOAD][type][fileName][uipid][pid][readTime][block_list]
@@ -63,11 +66,12 @@ if __name__ == "__main__":
             print(ret)
         
         if now.second % 1 == 0 and preSecond != now.second:
-            print('MemoryTime.put')
-            MemoryTime.put(1)
+            #print('MemoryTime.put')
+            #MemoryTime.put(1)
             #print(waitFileList)
             pass
+        MemoryTime.put(1)
         preSecond = now.second
         i += 1
-        time.sleep(0.1)
+        time.sleep(0.2)
         

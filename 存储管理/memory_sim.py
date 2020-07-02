@@ -242,10 +242,17 @@ def deal_message(message):
                 # res = read_flie(message[5])
                 # resMess.append(res)
                 # resMess.append(-1)
-                lock.acquire()
-                waitFileList.append(message)
-                lock.release()
-                return 
+                if len(message[9]) == 0:  # 错误文件
+                    resMess.append("COMMOM")
+                    resMess.append("FAIL")
+                    resMess.append(-1)
+                    resMess.append(message[6])
+                    resMess.append(message[7])
+                else:
+                    lock.acquire()
+                    waitFileList.append(message)
+                    lock.release()
+                    return 
         
         if message[3] == "WRITE":  # 需要写文件
             if message[5] == -1:  # UI直接进行写
@@ -258,10 +265,19 @@ def deal_message(message):
                 resMess.append(message[4])
                 resMess.append("SUCCESS")
             else:
-                lock.acquire()
-                waitFileList.append(message)
-                lock.release()
-                return 
+                if len(list(message[8].keys())) == 0:  # 文件错误
+                    resMess.append("RES")
+                    resMess.append("MEMORY")
+                    resMess.append("KERNEL")
+                    resMess.append("WRITE")
+                    resMess.append("FAIL")
+                    resMess.append(message[4])  # filename
+                    resMess.append(message[5])  # pid
+                else:
+                    lock.acquire()
+                    waitFileList.append(message)
+                    lock.release()
+                    return 
 
         if message[3] == "STORE_RUNTIME":  # 进程的时间片到了，指令没有执行完，则需要对指令执行到的时间进行记录
             PCBTable[message[4]].pc[1] = message[5]
