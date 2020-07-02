@@ -1,0 +1,1 @@
+print(len("C3      Q       "))

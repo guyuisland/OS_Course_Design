@@ -1,5 +1,23 @@
 import numpy as np
 import threading
+from multiprocessing import Process, Queue, Pool, Manager, Pipe
+import multiprocessing as mp
+import time
+import datetime
+
+class PCB:
+    file_list = []  # 打开文件列表
+    io = []  # IO使用情况(列表)
+    # cpureg = CPUREG()
+
+    def __init__(self):
+        self.pid = None  # pid
+        self.state = None  # ready, running, waiting, terminated
+        self.address_code = None  # 代码段首地址
+        self.process_memory_space = None  # 进程活动空间的大小
+        self.code_space = None  # 代码段长度
+        self.priority = None  # 进程优先级
+        self.pc = None  # 存放PC的值，根据PC取指令,是一个列表，pc[0]是当前指针地址，pc[1]为前一条指令运行了多久
 
 
 MAX_PHYSICAL_MEMORY_NUMBER = 512  # 物理内存最大数量
@@ -9,6 +27,12 @@ MAX_PROCESSES_NUMBER = 10
 PROCESS_ACTIVITY_AREA = 64
 
 pidBitmap = [0,0,0,0,0,0,0,0,0,0]  # 当前进程pid
+# tempPCB = PCB()
+# tempPCB.address_code = 0
+# tempPCB.pid = 100
+# tempPCB.state = "start"
+# tempPCB.process_memory_space = 3
+# tempPCB.code_space = 10
 PCBTable = {} # 存放PCB，key是pid，value是PCB
 processPCTable = {}  # 存放PC
 PageTable= {}  # 一个映射的页表
@@ -30,43 +54,37 @@ class Disk():
     
 #disk = Disk()
 #print(Disk.fileBlock)
+Disk.fileBlock[0] = "M10     Y3      C3      K10     C2      Wb  5 40C5      P20     "
+Disk.fileBlock[3] = "C3      Q       "
 
-class PCB:
-    file_list = []  # 打开文件列表
-    io = []  # IO使用情况(列表)
-    # cpureg = CPUREG()
 
-    def __init__(self, pid_, state_, address_code_, process_memory_space_, code_space_, priority_,pc_):
-        self.pid = pid_  # pid
-        self.state = state_  # ready, running, waiting, terminated
-        self.address_code = address_code_  # 代码段首地址
-        self.process_memory_space = process_memory_space_  # 进程活动空间的大小
-        self.code_space = code_space_  # 代码段长度
-        self.priority = priority_  # 进程优先级
-        self.pc = pc_  # 存放PC的值，根据PC取指令,是一个列表，pc[0]是当前指针地址，pc[1]为前一条指令运行了多久
 
 
 def create_pcb(firstAddress):  # 返回一个列表，0表示是否成功，1表示pid 
-    if actiAreaRemain < int(Instruction[firstAddress][2]):  # 进程活动空间不足，返回FAIL
-        return ["FAIL",-1,-1]
+    global actiAreaRemain
+    if actiAreaRemain < int(Instruction[firstAddress][1:4]):  # 进程活动空间不足，返回FAIL
+        return ["FAIL",-1,-1,-1]
     else:
         newPCB = PCB()
         pid_ = -1
         for index in range(10):
             if pidBitmap[index] == 0:
+                pidBitmap[index] = 1
                 pid_ = index + 1
+                break
         if pid_ == -1:
-            ["FAIL",-1,-1]
+            ["FAIL",-1,-1,-1]
         newPCB.pid = pid_
-        newPCB.state = "ready"
+        newPCB.state = "start"
         newPCB.address_code = firstAddress
-        newPCB.process_memory_space = int(Instruction[firstAddress][2])
-        newPCB.code_space = get_code_length(firstAddress)
-        newPCB.priority = int(Instruction[firstAddress+1][2])
+        newPCB.process_memory_space = int(Instruction[firstAddress][1:4])
+        res = get_code_length(firstAddress)  # res[0]是代码长度，res[1]是burstTime
+        newPCB.code_space = res[0]
+        newPCB.priority = int(Instruction[firstAddress+1][1:4])
         newPCB.pc = [firstAddress + 2,0]  # 初始化进程的PC
         PCBTable[newPCB.pid] = newPCB
-        actiAreaRemain -= int(Instruction[firstAddress][2])
-        return ["SUCCESS",newPCB.pid,newPCB.priority]
+        actiAreaRemain -= int(Instruction[firstAddress][1:4])
+        return ["SUCCESS",newPCB.pid,newPCB.priority,res[1]]
 
 
 def read_flie(blockList):
@@ -82,7 +100,7 @@ def read_flie(blockList):
 
 
 def write_file(blockContentDict):
-    for blockNumber in blockContentDict.keys():
+    for blockNumber in list(blockContentDict.keys()):
         if Disk.occupyBlock[blockNumber] == 0:  # 没被读也没被写，则可以
             Disk.fileBlock[blockNumber] = blockContentDict[blockNumber]  # 把内容写入到块当中，瞬间写完，不用
         else:
@@ -91,15 +109,17 @@ def write_file(blockContentDict):
 
     
 def allocate_memory_to_process(blockList):
+    global currProcessNum
+    global actiAreaRemain
     if currProcessNum >= 10:
-        return ["fail",-1]
+        return ["FAIL",-1]
     instNum = (len(blockList) - 1) * 8 + len(Disk.fileBlock[blockList[-1]])/8
     startAddr = get_free_block(instNum)
     if startAddr == -1:
-        return ["fail",-1]
+        return ["FAIL",-1]
 
     # 把这些内存块设为已被占用，不可使用
-    for i in range(startAddr,startAddr+instNum+1):
+    for i in range(startAddr,int(startAddr+instNum)):
         MemoryBitmap[i] = 1
 
     addrIndex = startAddr
@@ -112,7 +132,9 @@ def allocate_memory_to_process(blockList):
         Instruction[addrIndex] = blockStr[i*8:(i+1)*8]
         addrIndex += 1
     currProcessNum += 1
-    return ["succeed",startAddr]
+    if actiAreaRemain <= int(Instruction[startAddr][1:4]):
+        return ["FAIL",-1]
+    return ["SUCCESS",startAddr]
 
 
 def get_free_block(requestNum):
@@ -133,7 +155,7 @@ def get_free_block(requestNum):
 
 
 def modify_pcb(pid_,d_state):  # 改变进程的状态，返回成功或者失败
-    if pid_ in PCBTable.keys():
+    if pid_ in list(PCBTable.keys()):
         PCBTable[pid_].state = d_state
         return "SUCCESS"
     else:
@@ -141,10 +163,11 @@ def modify_pcb(pid_,d_state):  # 改变进程的状态，返回成功或者失�
 
 
 def delete_process(pid_):
+    global actiAreaRemain
     try:
         addr = PCBTable[pid_].address_code
         length = PCBTable[pid_].code_space
-        for i in range(addr, addr+length+1):
+        for i in range(addr, addr+length):
             Instruction[i] = ""
             MemoryBitmap[i] = 0
         actiAreaRemain += PCBTable[pid_].process_memory_space
@@ -156,16 +179,19 @@ def delete_process(pid_):
 
 def get_code_length(firstAddress_):  # 根据输入的代码首地址，返回代码段的长度
     addr = firstAddress_
-    while(Instruction[addr] != "Q"):
+    burstTime = 0
+    while(Instruction[addr][0] != "Q"):
+        if Instruction[addr][0] == "C":
+            burstTime += int(Instruction[addr][1:4])
         addr += 1
-    return addr - firstAddress_ + 1
+    return [addr - firstAddress_ + 1, burstTime]
 
 
-def deal_message(message, PCB_queue):
+def deal_message(message):
     resMess = []
     if message[0] == "REQ": # 消息为请求 
         if message[3] == "CREATE_PROCESS_MEMORY":  # 请求创建分配PCB
-            # message:[RES][MEMORY][PROCESS][CREATE_PROCESS][SUCCESS/FAIL][pid][priority][uipid]
+            # message:[RES][MEMORY][PROCESS][CREATE_PROCESS][SUCCESS/FAIL][pid][priority][burstTime][uipid]
             resMess.append("RES")  # 返回为应答
             resMess.append("MEMORY")
             resMess.append("PROCESS")
@@ -174,29 +200,30 @@ def deal_message(message, PCB_queue):
             resMess.append(res[0])  # 成功或者失败
             resMess.append(res[1])  # pid的值
             resMess.append(res[2])  # 优先级
+            resMess.append(res[3]) 
             resMess.append(message[5])  # uipid
         
-        if message[3] == "MOVE_QUEUE":  # 请求修改PCB
+        if message[3] == "MODIFY_STATE":  # 请求修改PCB
             # message:[RES][MEMORY][KERNEL][MOVE_QUEUE][pid][SUCCESS/FAIL]
             resMess.append("RES")  # 返回为应答
             resMess.append("MEMORY")
             resMess.append("KERNEL")
-            resMess.append("MOVE_QUEUE")
+            resMess.append("MODIFY_STATE")
             resMess.append(message[4])  #pid
             resMess.append(modify_pcb(message[4],message[6]))  # 成功还是失败
         
-        if message[3] == "TERMINATE_PROCESS":  # 请求把进程终止掉
+        if message[3] == "RELEASE_RESOURCES":  # 请求把进程终止掉
             # message:[RES][MEMORY][KERNEL][TERMINATE_PROCESS][pid][SUCCESS/FAIL]
             resMess.append("RES")  # 返回为应答
             resMess.append("MEMORY")
             resMess.append("KERNEL")
-            resMess.append("TERMINATE_PROCESS")
+            resMess.append("RELEASE_RESOURCES")
             resMess.append(message[4])  # pid
             resMess.append(delete_process(message[4]))  # SUCCESS/FAIL
         
         if message[3] == "LOAD":
-            # 输入的message:[REQ][FILESYSTEM][MEMORY][type][fileName][uipid][pid][readTime][block_list]
-            #                 0        1        2      3       4       5      6      7           8
+            # 输入的message:[REQ][FILESYSTEM][MEMORY][LOAD][type][fileName][uipid][pid][readTime][block_list]
+            #                 0        1        2      3     4       5        6     7      8         9
             # 输出的message:[RES][MEMORY][KERNEL][LOAD][type_str][load_res][startAddr][uipid][pid]
             # 如果是代码文件，则返回是否成功和起始地址，如果是普通文件则返回读是否成功
             resMess.append("RES")
@@ -205,31 +232,46 @@ def deal_message(message, PCB_queue):
             resMess.append("LOAD")
             if message[4] == "EXEC":  # 是代码指令文件
                 resMess.append("EXEC")
-                res = allocate_memory_to_process(message[8])
+                res = allocate_memory_to_process(message[9])
                 resMess.append(res[0])  # 返回SUCCESS/FAIL
                 resMess.append(res[1])  # 返回代码段的首地址
-                resMess.append(message[5])
                 resMess.append(message[6])
+                resMess.append(message[7])
             elif message[4] == "COMMOM":  # 如果是普通文件
                 # resMess.append("COMMOM")
                 # res = read_flie(message[5])
                 # resMess.append(res)
                 # resMess.append(-1)
+                lock.acquire()
                 waitFileList.append(message)
+                lock.release()
+                return 
         
         if message[3] == "WRITE":  # 需要写文件
-            # 收到的message:[REQ][FILESYSTEM][MEMORY][WRITE][fileName][pid][writeTime][blockContentDict]
-            # [RES][MEMORY][FILESYSTEM][LOAD][type_str][load_res][pid]
-            # resMess.append("RES")
-            # resMess.append("MEMORY")
-            # resMess.append("KERNEL")
-            # resMess.append("LOAD")
-            # res = write_file(message[4])
-            # resMess.append(res)
-            waitFileList.append(message)
+            if message[5] == -1:  # UI直接进行写
+                for BlockNumber in list(message[8].keys()):
+                    Disk.fileBlock[BlockNumber] = message[8][BlockNumber]
+                resMess.append("RES")
+                resMess.append("MEMORY")
+                resMess.append("UI")
+                resMess.append("WRITE")
+                resMess.append(message[4])
+                resMess.append("SUCCESS")
+            else:
+                lock.acquire()
+                waitFileList.append(message)
+                lock.release()
+                return 
 
         if message[3] == "STORE_RUNTIME":  # 进程的时间片到了，指令没有执行完，则需要对指令执行到的时间进行记录
             PCBTable[message[4]].pc[1] = message[5]
+            resMess.append("RES")
+            resMess.append("MEMORY")
+            resMess.append("KERNEL")
+            resMess.append("STORE_RUNTIME")
+            resMess.append(message[4])  # pid
+            resMess.append("SUCCESS")
+
         
         if message[3] == "INSTRUCTION_FETCH":  # kernel根据pid去取指令
             resMess.append("RES")
@@ -242,10 +284,11 @@ def deal_message(message, PCB_queue):
                 resMess.append(Instruction[PCBTable[pid_].pc[0]])
                 resMess.append(0)
                 PCBTable[pid_].pc[0] += 1
-                PCBTable[pid_].pc[0] = 0
+                PCBTable[pid_].pc[1] = 0
             else:
-                resMess.append(Instruction[PCBTable[pid_].pc[0] - 1])
-                resMess.append(PCBTable[pid_].pc[1])
+                resMess.append(Instruction[PCBTable[pid_].pc[0] - 1])  # 取上一条指令
+                resMess.append(PCBTable[pid_].pc[1])  # 指令运行的时间
+                PCBTable[pid_].pc[1] = 0
 
     else:
         pass
@@ -253,67 +296,105 @@ def deal_message(message, PCB_queue):
     return resMess
 
 def send_memory_state_to_UI():
+    global PCBTable
     resMess = []
     resMess.append("RES")
     resMess.append("MEMORY")
     resMess.append("UI")
     resMess.append("MEMORY_SNAPSHOT")
     memoryDict = {}
-    for PCB_ in PCBTable:
-        memoryDict[PCB_.pid] = [PCB_.address_code_, PCB_.code_space_ + PCB_.address_code_]
+    #print('send_memory_state_to_UI',PCBTable)
+    for PCBIndex in PCBTable.keys():
+        memoryDict[PCBIndex] = [PCBTable[PCBIndex].address_code, PCBTable[PCBIndex].code_space + PCBTable[PCBIndex].address_code]
     resMess.append(memoryDict)
     # message:[RES][MEMORY][UI][MEMORY_SNAPSHOT][memoryDict]
     return resMess
 
-def send_disk_state_to_device():
-    pass
 
 
 def every_time_deal(Memory2Kernel,MemoryTime):
-    # 输入的读文件message:[REQ][FILESYSTEM][MEMORY][type][fileName][uipid][pid][readTime][block_list]
-    #                      0        1        2      3       4       5      6      7           8
+    # 输入的读message:[REQ][FILESYSTEM][MEMORY][LOAD][type][fileName][uipid][pid][readTime][block_list]
+    #                  0         1        2      3     4       5        6     7      8         9
+    # 输入的写message:[REQ][FILESYSTEM][MEMORY][WRITE][fileName][pid][writeTime][writeType][blockContentDict]
     while 1:
         MemoryTime.get()  # 每次收到时间片执行下面的指令
-        for runMess in runFileList:  # 处理正在读和写的文件队列
+        #print('here')
+        runIndex = 0
+        while runIndex < (len(runFileList)):  # 处理正在读和写的文件队列
+            #print('index',runIndex)
+            runMess = runFileList[runIndex]
             if runMess[3] == "LOAD":  # 读文件的消息
-                runMess[7] -= 1  # 读文件的时间减1
-                if runMess[7] == 0:  # 该文件读完成了，返回完成的message，并将这个message移除，修改文件块状态
+                runMess[8] -= 1  # 读文件的时间减1
+                if runMess[8] == 0:  # 该文件读完成了，返回完成的message，并将这个message移除，修改文件块状态
                     # [RES][MEMORY][KERNEL][LOAD][type_str][load_res][startAddr][uipid][pid]
                     Memory2Kernel.put(["RES","MEMORY","KERNEL","LOAD","COMMOM","SUCCESS",-1,-1,runMess[6]])
-                    read_done(runMess[8])  #  读资源释放
+                    print(["RES","MEMORY","KERNEL","LOAD","COMMOM","SUCCESS",-1,-1,runMess[7]])
+                    read_done(runMess[9])  #  读资源释放
                     runFileList.remove(runMess)  # 移出列表
+                    runIndex -= 1
             elif runMess[3] == "WRITE":
                 runMess[6] -= 1  # 写文件的时间减1
                 if runMess[6] == 0:  # 该文件写完成了，返回完成的message，并将这个message移除，修改文件块状态
+                    #输入：[REQ][FILESYSTEM][MEMORY][WRITE][fileName][pid][writeTime][blockContentDict]
                     #[RES][MEMORY][KERNEL][WRITE][writeRes][fileName][pid]
                     Memory2Kernel.put(["RES","MEMORY","KERNEL","WRITE","SUCCESS",runMess[4],runMess[5]])
-                    write_done(runMess[7].keys())
+                    print(["RES","MEMORY","KERNEL","WRITE","SUCCESS",runMess[4],runMess[5]])
+                    write_done(runMess[8].keys())
                     runFileList.remove(runMess)  # 移出列表
-        
-        for waitMess in waitFileList:  # 处理等待队列
+                    runIndex -= 1
+            runIndex += 1
+        waitIndex = 0
+        while waitIndex < len(waitFileList):  # 处理等待队列
+            waitMess = waitFileList[waitIndex]
             if waitMess[3] == "LOAD":  # 处理读文件的操作
-                if Disk.occupyBlock[waitMess[8][0]] == 1:  # 文件块正在被读
-                    continue
-                elif Disk.occupyBlock[waitMess[8][0]] == 0:  # 文件块未被读也未被写
-                    for blockNumber in waitMess[8]:
+                #print(waitMess)
+                if Disk.occupyBlock[waitMess[9][0]] == 1:  # 文件块正在被写
+                    pass
+                elif Disk.occupyBlock[waitMess[9][0]] == 0:  # 文件块未被读也未被写
+                    for blockNumber in waitMess[9]:
                         Disk.occupyBlock[blockNumber] = 2
                     runFileList.append(waitMess)
-                elif Disk.occupyBlock[waitMess[8][0]] >= 2:  # 文件正在被读，不会发生读读冲突
-                    for blockNumber in waitMess[8]:
+                    waitFileList.remove(waitMess)
+                    waitIndex -= 1
+                elif Disk.occupyBlock[waitMess[9][0]] >= 2:  # 文件正在被读，不会发生读读冲突
+                    for blockNumber in waitMess[9]:
                         Disk.occupyBlock[blockNumber] += 1
                     runFileList.append(waitMess)
+                    waitFileList.remove(waitMess)
+                    waitIndex -= 1
                 else:
                     print('readFile,wait to run error')
 
             if waitMess[3] == "WRITE":  # 处理写文件的操作
-                if Disk.occupyBlock[waitMess[8][0]] == 0:  # 文件块未进行读写操作
-                    for blockNumber in runMess[7].keys():
+                blockList_ = list(waitMess[8].keys())
+                #print('WRITE',Disk.occupyBlock[blockList_[0]])
+                if Disk.occupyBlock[blockList_[0]] == 0:  # 文件块未进行读写操作
+                    blockContentDict = waitMess[8]
+                    for blockNumber in blockList_:
                         Disk.occupyBlock[blockNumber] = 1  # 将文件块置为读状态
+                        if waitMess[7] == "cover":
+                            Disk.fileBlock[blockNumber] = blockContentDict[blockNumber]
+                        elif waitMess[7] == "add":
+                            Disk.fileBlock[blockNumber] += blockContentDict[blockNumber]
+                        else:
+                            print('block cover or add ERROR')
+                    runFileList.append(waitMess)
+                    waitFileList.remove(waitMess)
+                    waitIndex -= 1
+            waitIndex += 1
         
         if len(runFileList) == 0:  # 磁盘空闲
             Memory2Kernel.put(['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'WAIT'])
+            print(['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'WAIT'])
         else:
             Memory2Kernel.put(['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'RUN'])
+            print(['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'RUN'])
+        uiMess = send_memory_state_to_UI()
+        print(uiMess)
+        print('runFileList',runFileList)
+        print('waitFileList',waitFileList)
+        print('***************************************************')
+        Memory2Kernel.put(uiMess)
 
 
 def read_done(blockList_):       
@@ -331,13 +412,62 @@ def write_done(blockList_):  # 把所有写文件块置为0
         Disk.occupyBlock[blockNumber] = 0
 
 def start_memory(Kernel2Memory, Memory2Kernel, MemoryTime):
-    t1 = threading.Thread(target=every_time_deal, args=(Memory2Kernel,MemoryTime,))
+    t1 = threading.Thread(target=every_time_deal, args=(Memory2Kernel,MemoryTime))
     t1.start()
     while (1):
         while Kernel2Memory.qsize() != 0:
             message = Kernel2Memory.get()
             ret_message = deal_message(message)
-            ui_message = send_memory_state_to_UI()
-            Memory2Kernel.put(ret_message)
-            Memory2Kernel.put(ui_message)
-            
+            if ret_message != None:
+                Memory2Kernel.put(ret_message)
+            #print('PCBTable',PCBTable)
+    
+
+# if __name__ == "__main__":
+#     Kernel2Memory = Queue()
+#     preSecond = 0
+#     Memory2Kernel = Queue()
+#     MemoryTime = Queue()
+#     p = Process(target=start_memory,
+#                         args=(Kernel2Memory, Memory2Kernel, MemoryTime,))
+#     p.start()
+    
+#     i = 0
+#     testMessage = []
+#     testMessage.append(["REQ",'FILESYSTEM','MEMORY','LOAD','EXEC','a',1,-1,-1,[0,3]])
+#     testMessage.append(["REQ",'PROCESS','MEMORY','CREATE_PROCESS_MEMORY',0,1])
+#     testMessage.append(["REQ",'FILESYSTEM','MEMORY','LOAD','EXEC','a',2,-1,-1,[0,3]])
+#     testMessage.append(["REQ",'PROCESS','MEMORY','CREATE_PROCESS_MEMORY',10,2])
+#     testMessage.append(["REQ",'KERNEL','MEMORY','MODIFY_STATE',1,"ready","running"])
+#     #testMessage.append(["REQ",'KERNEL','MEMORY','RELEASE_RESOURCES',1])
+#     testMessage.append(["REQ",'KERNEL','MEMORY','INSTRUCTION_FETCH',1])
+#     testMessage.append(["REQ",'KERNEL','MEMORY','STORE_RUNTIME',1,3])
+#     testMessage.append(["REQ",'KERNEL','MEMORY','INSTRUCTION_FETCH',1])
+#     testMessage.append(["REQ",'KERNEL','MEMORY','INSTRUCTION_FETCH',1])
+#     testMessage.append(["REQ",'KERNEL','MEMORY','INSTRUCTION_FETCH',1])
+
+#     # 测试读COMMOM文件和写文件(指令)
+#     # 读：[REQ][FILESYSTEM][MEMORY][LOAD][type][fileName][uipid][pid][readTime][block_list]
+#     # 写：[REQ][FILESYSTEM][MEMORY][WRITE][fileName][pid][writeTime][blockContentDict]
+#     waitFileList.append(["REQ",'FILESYSTEM','MEMORY','LOAD','COMMOM','a',-1,1,5,[0,3]])
+#     waitFileList.append(["REQ",'FILESYSTEM','MEMORY','LOAD','COMMOM','B',-1,2,3,[4,6]])
+#     waitFileList.append(["REQ",'FILESYSTEM','MEMORY','LOAD','COMMOM','a',-1,3,4,[0,3]])
+#     waitFileList.append(["REQ",'FILESYSTEM','MEMORY','WRITE','a',4,2,[0,3]])
+#     waitFileList.append(["REQ",'FILESYSTEM','MEMORY','WRITE','B',5,3,[4,6]])
+#     print(len(testMessage))
+#     while 1:
+#         now = datetime.datetime.now()
+#         print(now.second)
+#         if i < len(testMessage):
+#             #Kernel2Memory.put(testMessage[i])   
+#             #ret = Memory2Kernel.get()
+#             pass
+        
+#         if now.second % 2 == 0 and preSecond != now.second:
+#             print('MemoryTime.put')
+#             MemoryTime.put(1)
+#             #print(waitFileList)
+#             pass
+#         preSecond = now.second
+#         i += 1
+#         time.sleep(1)
