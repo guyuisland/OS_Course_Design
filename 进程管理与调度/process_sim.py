@@ -4,6 +4,8 @@ ready_dict = {}  # ready队列
 running_dict = {}  # running队列
 waiting_dict = {}  # waiting队列
 
+WAITING2READY = -2
+
 
 class PCB:
     file_list = []  # 打开文件列表
@@ -143,7 +145,6 @@ def deal_message(message):
         elif message[3] == "MOVE_QUEUE":  # 消息类型为将进程移动到某个状态
             # message:[REQ][*][PROCESS][MOVE_QUEUE][pid][s_state][d_state]
             pid = message[4]
-            pid_ret = pid  # set pid as default pid_ret
             if message[5] == 'RUNNING' and message[6] == 'READY':
                 move_from_running_to_ready(pid, running_dict, ready_dict)
                 pid_ret = choose_to_run(ready_dict)
@@ -154,6 +155,7 @@ def deal_message(message):
                 move_from_ready_to_running(pid_ret, ready_dict, running_dict)
             elif message[5] == 'WAITING' and message[6] == 'READY':
                 move_from_waiting_to_ready(pid, waiting_dict, ready_dict)
+                pid_ret = WAITING2READY
             elif pid == "" and message[6] == "RUNNING":
                 pid_ret = choose_to_run(ready_dict)
                 move_from_ready_to_running(pid_ret, ready_dict, running_dict)
