@@ -121,7 +121,7 @@ def dealDeviceMess(dealMess):
         elif dealMess[3] == "ADD_DEVICE":
             # 添加设备
             resMess.append("DEVICE")
-            resMess.append("GUI")
+            resMess.append("UI")
             resMess.append("ADD_DEVICE")
             addType = dealMess[4]
             addState = addDevice(addType)
@@ -135,7 +135,7 @@ def dealDeviceMess(dealMess):
         elif dealMess[3] == "DELETE_DEVICE":
             # 删除设备
             resMess.append("DEVICE")
-            resMess.append("GUI")
+            resMess.append("UI")
             resMess.append("DELETE_DEVICE")
             deleteType = dealMess[4]
             deleteState = deleteDevice(deleteType)
@@ -149,10 +149,10 @@ def dealDeviceMess(dealMess):
     elif dealMess[0] == "RES":
         if dealMess[3] == "DISK_STATE":
             # 更新磁盘状态
-            #发送给GUI
+            #发送给UI
             resMess.append("INFO")
             resMess.append("DEVICE")
-            resMess.append("GUI")
+            resMess.append("UI")
             resMess.append("DISK_STATE")
 
             if dealMess[4] == "RUN":
@@ -164,7 +164,7 @@ def dealDeviceMess(dealMess):
 
 
 # TODO 设备管理的主要调度函数
-def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDeviceMess, deviceTimer):
+def deviceMain(deviceToKernelMess, deviceToUIMess, kernelToDeviceMess, guiToDeviceMess, deviceTimer):
     global float_timerCount
     global bool_timerUp
 
@@ -185,9 +185,9 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
         while guiToDeviceMess.qsize() != 0:
             # 处理从gui传来的消息
             getMessage = guiToDeviceMess.get()
-            print('from Gui: ', getMessage)
+            print('from UI: ', getMessage)
             responseMess = dealDeviceMess(getMessage)
-            deviceToGuiMess.put(responseMess)
+            deviceToUIMess.put(responseMess)
 
         while kernelToDeviceMess.qsize() != 0:
             # 处理从kernel传来的消息
@@ -199,7 +199,7 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
                     # 回复消息
                     deviceToKernelMess.put(responseMess)
                 elif responseMess[0] == "INFO":  # 仅在更新磁盘状态时，使用
-                    deviceToGuiMess.put(responseMess)
+                    deviceToUIMess.put(responseMess)
 
         # TODO 设备调度的主要函数
         # time_end = time.perf_counter()
@@ -248,10 +248,10 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
                             ret_mess_device.append(line["pID"])
                             deviceToKernelMess.put(ret_mess_device)
 
-                            # 通知GUI
-                            ret_mess_device = ["INFO", "DEVICE", "GUI", "DEVICE_FINISH"]
+                            # 通知UI
+                            ret_mess_device = ["INFO", "DEVICE", "UI", "DEVICE_FINISH"]
                             ret_mess_device.append(char_device)
-                            deviceToGuiMess.put(ret_mess_device)
+                            deviceToUIMess.put(ret_mess_device)
 
                             print("### interr ###")
                             print(">>>> >>>> finish running: " + str(line))
@@ -286,9 +286,9 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
                             print("### interrupt ### stop device: " + str(line))
 
                             # TODO 更新设备状态
-                            ret_mess_device = ["INFO", "DEVICE", "GUI", "DEVICE_UPDATE", "INTTERUPT"]
+                            ret_mess_device = ["INFO", "DEVICE", "UI", "DEVICE_UPDATE", "INTTERUPT"]
                             ret_mess_device.append(char_device)
-                            deviceToGuiMess.put(ret_mess_device)
+                            deviceToUIMess.put(ret_mess_device)
 
                         break
 
@@ -312,9 +312,9 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
                     deviceToKernelMess.put(ret_mess_device)'''
 
                     # TODO 更新设备状态
-                    ret_mess_device = ["INFO", "DEVICE", "GUI", "DEVICE_UPDATE", "RECOVER"]
+                    ret_mess_device = ["INFO", "DEVICE", "UI", "DEVICE_UPDATE", "RECOVER"]
                     ret_mess_device.append(char_device)
-                    deviceToGuiMess.put(ret_mess_device)
+                    deviceToUIMess.put(ret_mess_device)
 
                     print("### recover device success: " + str(list_deviceTable))
                     bool_waitRecover = False
@@ -343,10 +343,10 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
                             ret_mess_device.append(line["pID"])
                             deviceToKernelMess.put(ret_mess_device)
 
-                            # 通知GUI
-                            ret_mess_device = ["INFO", "DEVICE", "GUI", "DEVICE_FINISH"]
+                            # 通知UI
+                            ret_mess_device = ["INFO", "DEVICE", "UI", "DEVICE_FINISH"]
                             ret_mess_device.append(char_device)
-                            deviceToGuiMess.put(ret_mess_device)
+                            deviceToUIMess.put(ret_mess_device)
 
                             print(">>>> >>>> finish running: " + str(line))
                             # 更新设备表
@@ -385,15 +385,15 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
 
 
 
-                        else:  # 设备没有运行结束 更新剩余时间，通知GUI
+                        else:  # 设备没有运行结束 更新剩余时间，通知UI
                             temp_restTime = temp_restTime - 1.0
                             line['restTime'] = temp_restTime
                             # print("update restTime: " + str(line))
                             # time_startDevice = time.perf_counter()  # 更新设备开始时间
-                            # 通知GUI
-                            ret_mess_device = ["INFO", "DEVICE", "GUI", "DEVICE_UPDATE", "RUN"]
+                            # 通知UI
+                            ret_mess_device = ["INFO", "DEVICE", "UI", "DEVICE_UPDATE", "RUN"]
                             ret_mess_device.append(char_device)
-                            deviceToGuiMess.put(ret_mess_device)
+                            deviceToUIMess.put(ret_mess_device)
 
                         break
 
@@ -438,9 +438,9 @@ def deviceMain(deviceToKernelMess, deviceToGuiMess, kernelToDeviceMess, guiToDev
                                 deviceToKernelMess.put(ret_mess_device)'''
 
                                 # TODO 更新设备状态
-                                ret_mess_device = ["INFO", "DEVICE", "GUI", "DEVICE_UPDATE", "RUN"]
+                                ret_mess_device = ["INFO", "DEVICE", "UI", "DEVICE_UPDATE", "RUN"]
                                 ret_mess_device.append(char_device)
-                                deviceToGuiMess.put(ret_mess_device)
+                                deviceToUIMess.put(ret_mess_device)
 
                                 # time_startDevice = time.perf_counter()  # 更新设备开始时间
                                 break
