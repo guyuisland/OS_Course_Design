@@ -1,15 +1,24 @@
 
+BLOCK_SIZE = 4
+block_index = []
+
 
 class Inode:
     __node_table = dict()  # node_no : inode
 
-    def __init__(self):
+    def __init__(self, node_no):
         self.block_size = -1
+        # inode type : file / directory
+        # and should I consider how to change directory ?
         self.block_allocate = []
+        self.allocate_blocks(1)
 
-    def allocate_blocks(self):
+    # allocate blocks for a inode
+    def allocate_blocks(self, block_num):
+        # find 'block_num' blocks
         pass
 
+    # find inode from node_no, then release all
     def release_blocks(self):
         pass
 
@@ -21,9 +30,11 @@ class Inode_FileName:
         self.file_name = file_name
         self.inode_no = hash(self.file_name)
         self.make_new_inode()
+        Inode_FileName.__node_name_table[self.inode_no] = self.file_name
 
     def make_new_inode(self):
-        pass
+        inode = Inode(self.inode_no)
+        Inode.__node_table[self.inode_no] = inode
 
     @staticmethod
     def get_inode(file_name: str):
@@ -64,6 +75,12 @@ def store_file(buffer, file_name: str) -> int:
     Give a file name and a buffer, store the contents of buffer into the file.
     Return status: 0 - succeed, -1 - fail, other - ...
     '''
+    # calculate blocks needed
+
+    # release file blocks
+
+    # reallocate blocks for file
+
     return 0
 
 
@@ -73,4 +90,5 @@ def change_file_name(file_name: str, new_file_name: str) -> int:
     Give a file name and a new file name, change the file name.
     Return status: 0 - succeed, -1 - fail, other - ...
     '''
+    #
     return 0
