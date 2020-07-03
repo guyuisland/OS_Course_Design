@@ -1,0 +1,249 @@
+---- ---- TIMER Count:  1.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+from Kernel:  ['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'WAIT']
+---- ---- TIMER Count:  2.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv: from Kernel:  ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'L'] 
+['INFO', 'DEVICE', 'UI', 'DISK_STATE', 'WAIT']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'ADD_DEVICE', 'SUCC', 'L']
+---- ---- TIMER Count:  3.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+from Kernel:  ['RES', 'KERNEL', 'DEVICE', 'DISK_STATE', 'RUN']
+---- ---- TIMER Count:  4.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DISK_STATE', 'RUN']
+from Kernel:  ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'L', 0, 3, 9.2]
+---- ---- TIMER Count:  5.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+<<<< <<<< update list_deviceTable: {'deviceType': 'L', 'state': 'R', 'pID': 0, 'totalTime': 9.2, 'restTime': 9.2, 'pPrority': 3, 'arriveTime': 0}
+from Kernel: ....Kernel recv:   ['RES', 'DEVICE', 'KERNEL', 'ADD_QUERY', 'SUCC', 0]['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'L']
+
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'ADD_DEVICE', 'FAIL', 'L']
+---- ---- TIMER Count:  6.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+from Kernel:  ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'T']
+---- ---- TIMER Count:  7.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  from Kernel:  ['RES', 'DEVICE', 'UI', 'ADD_DEVICE', 'SUCC', 'T']
+['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'M', 1, 1, 12.1]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'ADD_QUERY', 'FAIL', 1]
+---- ---- TIMER Count:  8.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv: from Kernel:   ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'L', 2, 4, 3.0]
+
+---- ---- TIMER Count:  9.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'ADD_QUERY', 'SUCC', 2]
+from Kernel:  ['REQ', 'KERNEL', 'DEVICE', 'INTERRUPT_OCCOUR']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'INTERRUPT_OCCOUR', 'SUCC']
+---- ---- TIMER Count:  10.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+### interrupt ### stop device: {'deviceType': 'L', 'state': 'R', 'pID': 0, 'totalTime': 9.2, 'restTime': 5.199999999999999, 'pPrority': 3, 'arriveTime': 0}
+### interrupt success ###
+....Kernel recv: from Kernel:  ['REQ', 'KERNEL', 'DEVICE', 'INTERRUPT_RECOVER']
+ ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'INTTERUPT', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'INTERRUPT_DEVICE', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'INTERRUPT_RECOVER', 'SUCC']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RECOVER', 'L']
+---- ---- TIMER Count:  11.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv: use have device 
+from Kernel:  ['REQ', 'UI', 'DEVICE', 'DELETE_DEVICE', 'L']
+['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'DELETE_DEVICE', 'FAIL', 'L']
+---- ---- TIMER Count:  12.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+from Kernel:  ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'Q']
+---- ---- TIMER Count:  13.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'ADD_DEVICE', 'SUCC', 'Q']
+from Kernel:  ....Kernel recv:  ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'P', 6, 1, 4.5]['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+
+---- ---- TIMER Count:  14.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'ADD_QUERY', 'SUCC', 6]from Kernel: 
+ ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'Q', 8, 4, 8.0]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'ADD_QUERY', 'SUCC', 8]
+---- ---- TIMER Count:  15.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+from Kernel:  ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'L']
+---- ---- TIMER Count:  16.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+>>>> >>>> finish running: {'deviceType': 'L', 'state': 'R', 'pID': 0, 'totalTime': 9.2, 'restTime': 0.1999999999999993, 'pPrority': 3, 'arriveTime': 0}
+from Kernel:  ....Kernel recv:  ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'P', 11, 12, 3.9]['RES', 'DEVICE', 'UI', 'ADD_DEVICE', 'FAIL', 'L']
+
+....Kernel recv:  ['REQ', 'DEVICE', 'KERNEL', 'DEVICE_FINISH', 0]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_FINISH', 'L']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'ADD_QUERY', 'SUCC', 11]
+---- ---- TIMER Count:  17.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+<<<< <<<< update list_deviceTable: {'deviceType': 'P', 'state': 'R', 'pID': 6, 'totalTime': 4.5, 'restTime': 4.5, 'pPrority': 0, 'arriveTime': 2}
+....Kernel recv:  use have device['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+
+from Kernel:  ['REQ', 'UI', 'DEVICE', 'DELETE_DEVICE', 'L']
+---- ---- TIMER Count:  18.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv: from Kernel:  ['REQ', 'KERNEL', 'DEVICE', 'ADD_QUERY', 'K', 12, 1, 13.9]
+ ['RES', 'DEVICE', 'UI', 'DELETE_DEVICE', 'FAIL', 'L']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+....Kernel recv:  ['RES', 'DEVICE', 'KERNEL', 'ADD_QUERY', 'SUCC', 12]
+---- ---- TIMER Count:  19.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+from Kernel:  ['REQ', 'UI', 'DEVICE', 'DELETE_DEVICE', 'S']
+---- ---- TIMER Count:  20.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  use have device['RES', 'DEVICE', 'UI', 'DELETE_DEVICE', 'FAIL', 'S']
+
+device num is 0
+list have device
+from Kernel:  ['REQ', 'UI', 'DEVICE', 'DELETE_DEVICE', 'T']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'DELETE_DEVICE', 'SUCC', 'T']
+---- ---- TIMER Count:  21.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv: from Kernel:   ['REQ', 'UI', 'DEVICE', 'DELETE_DEVICE', 'K']
+['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'DELETE_DEVICE', 'FAIL', 'K']
+---- ---- TIMER Count:  22.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+>>>> >>>> finish running: {'deviceType': 'P', 'state': 'R', 'pID': 6, 'totalTime': 4.5, 'restTime': 0.5, 'pPrority': 0, 'arriveTime': 2}
+from Kernel: ....Kernel recv:  ['REQ', 'UI', 'DEVICE', 'ADD_DEVICE', 'L'] 
+['REQ', 'DEVICE', 'KERNEL', 'DEVICE_FINISH', 6]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_FINISH', 'P']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'ADD_DEVICE', 'FAIL', 'L']
+---- ---- TIMER Count:  23.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+<<<< <<<< update list_deviceTable: {'deviceType': 'K', 'state': 'R', 'pID': 12, 'totalTime': 13.9, 'restTime': 13.9, 'pPrority': 0, 'arriveTime': 5}
+....Kernel recv: from Kernel:   ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']['REQ', 'UI', 'DEVICE', 'DELETE_DEVICE', 'P']
+
+---- ---- TIMER Count:  24.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+use have device
+from Kernel:  ....Kernel recv: ['REQ', 'UI', 'DEVICE', 'DELETE_DEVICE', 'L'] ['RES', 'DEVICE', 'UI', 'DELETE_DEVICE', 'FAIL', 'P']
+
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+....Kernel recv:  ['RES', 'DEVICE', 'UI', 'DELETE_DEVICE', 'FAIL', 'L']
+---- ---- TIMER Count:  25.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  26.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  27.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  28.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  29.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  30.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  31.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  32.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  33.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  34.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  35.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  36.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'K']
+---- ---- TIMER Count:  37.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+>>>> >>>> finish running: {'deviceType': 'K', 'state': 'R', 'pID': 12, 'totalTime': 13.9, 'restTime': 0.9000000000000004, 'pPrority': 0, 'arriveTime': 5}
+....Kernel recv:  ['REQ', 'DEVICE', 'KERNEL', 'DEVICE_FINISH', 12]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_FINISH', 'K']
+---- ---- TIMER Count:  38.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+<<<< <<<< update list_deviceTable: {'deviceType': 'L', 'state': 'R', 'pID': 2, 'totalTime': 3.0, 'restTime': 3.0, 'pPrority': 1, 'arriveTime': 1}
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+---- ---- TIMER Count:  39.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+---- ---- TIMER Count:  40.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'L']
+---- ---- TIMER Count:  41.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+>>>> >>>> finish running: {'deviceType': 'L', 'state': 'R', 'pID': 2, 'totalTime': 3.0, 'restTime': 1.0, 'pPrority': 1, 'arriveTime': 1}
+....Kernel recv:  ['REQ', 'DEVICE', 'KERNEL', 'DEVICE_FINISH', 2]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_FINISH', 'L']
+---- ---- TIMER Count:  42.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+<<<< <<<< update list_deviceTable: {'deviceType': 'Q', 'state': 'R', 'pID': 8, 'totalTime': 8.0, 'restTime': 8.0, 'pPrority': 0, 'arriveTime': 3}
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  43.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  44.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  45.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  46.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  47.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  48.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  49.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'Q']
+---- ---- TIMER Count:  50.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+>>>> >>>> finish running: {'deviceType': 'Q', 'state': 'R', 'pID': 8, 'totalTime': 8.0, 'restTime': 1.0, 'pPrority': 0, 'arriveTime': 3}
+....Kernel recv:  ['REQ', 'DEVICE', 'KERNEL', 'DEVICE_FINISH', 8]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_FINISH', 'Q']
+---- ---- TIMER Count:  51.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+<<<< <<<< update list_deviceTable: {'deviceType': 'P', 'state': 'R', 'pID': 11, 'totalTime': 3.9, 'restTime': 3.9, 'pPrority': 8, 'arriveTime': 4}
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+---- ---- TIMER Count:  52.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+---- ---- TIMER Count:  53.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+---- ---- TIMER Count:  54.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_UPDATE', 'RUN', 'P']
+---- ---- TIMER Count:  55.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+>>>> >>>> finish running: {'deviceType': 'P', 'state': 'R', 'pID': 11, 'totalTime': 3.9, 'restTime': 0.8999999999999999, 'pPrority': 8, 'arriveTime': 4}
+....Kernel recv:  ['REQ', 'DEVICE', 'KERNEL', 'DEVICE_FINISH', 11]
+....Kernel recv:  ['INFO', 'DEVICE', 'UI', 'DEVICE_FINISH', 'P']
+---- ---- TIMER Count:  56.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+---- ---- TIMER Count:  57.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+---- ---- TIMER Count:  58.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+---- ---- TIMER Count:  59.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+---- ---- TIMER Count:  60.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
+---- ---- TIMER Count:  61.0
+++++++ Timer:  ['TIMER', '*', 'DEVICE']
