@@ -6,9 +6,7 @@ import queue
 import deviceManagerMessage.device_sim
 
 kernelToDeviceMess = Queue()
-guiToDeviceMess = Queue()
 deviceToKernelMess = Queue()
-deviceToUIMess = Queue()
 deviceTimer = Queue()
 
 check = [
@@ -39,7 +37,7 @@ check = [
 ]
 
 
-def write(deviceToKernelMess, deviceToUIMess, kernelToDeviceMess, guiToDeviceMess):
+def write(deviceToKernelMess, kernelToDeviceMess):
     i = 0
     j = 0
     while True:
@@ -47,17 +45,17 @@ def write(deviceToKernelMess, deviceToUIMess, kernelToDeviceMess, guiToDeviceMes
             ret_mess_device = check[i]
             # from UI
             if ret_mess_device[1] == 'UI':
-                guiToDeviceMess.put(ret_mess_device)
+                kernelToDeviceMess.put(ret_mess_device)
 
             else:
                 kernelToDeviceMess.put(ret_mess_device)
 
             i = i + 1
 
-        while deviceToUIMess.qsize() != 0:
-            getMess = deviceToUIMess.get()
+        '''while deviceToKernelMess.qsize() != 0:
+            getMess = deviceToKernelMess.get()
             print('UI recv: ', getMess)
-
+'''
         while deviceToKernelMess.qsize() != 0:
             getMess = deviceToKernelMess.get()
             print('....Kernel recv: ', getMess)
@@ -86,11 +84,9 @@ def timerForDevice(TimerDevice):
 
 if __name__ == "__main__":
     pDevice = Process(target=deviceManagerMessage.device_sim.deviceMain,
-                      args=(deviceToKernelMess, deviceToUIMess,
-                            kernelToDeviceMess, guiToDeviceMess, deviceTimer,))
+                      args=(deviceToKernelMess, kernelToDeviceMess, deviceTimer,))
 
-    wp = Process(target=write, args=(deviceToKernelMess, deviceToUIMess,
-                                     kernelToDeviceMess, guiToDeviceMess,))
+    wp = Process(target=write, args=(deviceToKernelMess,kernelToDeviceMess,))
 
     timerDevice = Process(target=timerForDevice, args=(deviceTimer,))
 

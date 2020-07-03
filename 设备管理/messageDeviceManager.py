@@ -6,16 +6,13 @@ import queue
 import deviceManagerMessage.device_sim
 
 kernelToDeviceMess = Queue()
-guiToDeviceMess = Queue()
 deviceToKernelMess = Queue()
-deviceToUIMess = Queue()
 deviceTimer = Queue()
 
 
 
 if __name__ == "__main__":
     pDevice = Process(target=deviceManagerMessage.device_sim.deviceMain,
-                      args=(deviceToKernelMess, deviceToUIMess,
-                            kernelToDeviceMess, guiToDeviceMess, deviceTimer,))
+                      args=(deviceToKernelMess, kernelToDeviceMess,deviceTimer,))
 
     pDevice.start()
