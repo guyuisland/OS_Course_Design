@@ -1,5 +1,7 @@
 import math
 from memory_sim import Disk
+# Please import memory_sim.Disk here
+import json
 
 BLOCK_SIZE = 64
 BLOCK_AMOUNT = 100
@@ -41,12 +43,17 @@ def release_blocks(block_list):
 class Inode:
     node_table = dict()  # node_no : inode
 
-    def __init__(self, file_type):
-        self.file_size = 0
+    def __init__(self, file_type, file_size=0, block_allocation=None):
+        if block_allocation is None:
+            block_allocation = []
+        self.file_size = int(file_size)
         # inode type : common / exec
         self.file_type = file_type
-        self.block_allocation = []
-        self.allocate(1)
+        self.block_allocation = block_allocation
+        if len(block_allocation) == 0:
+            self.allocate(1)
+        else:
+            occupy_blocks(block_allocation)
 
     # allocate blocks for a inode
     def allocate(self, block_num):
@@ -82,7 +89,8 @@ class Inode:
 
 
 class InodeFileName:
-    node_name_table = {'/': []}  # key: name ; value: (type,name,inode_for_file)
+    # key: name ; value: (type,name,inode_for_file)
+    node_name_table = {'/': []}
     starting_node_no = 2
     pwd_name = '/'
 
@@ -91,7 +99,8 @@ class InodeFileName:
         self.inode_no = InodeFileName.get_new_node_no()  # get a inode_no
         inode = Inode(file_type)
         Inode.node_table[self.inode_no] = inode
-        InodeFileName.node_name_table[dir_name].append((TYPE_FILE, file_name, self.inode_no))
+        InodeFileName.node_name_table[dir_name].append(
+            (TYPE_FILE, file_name, self.inode_no))
 
     @classmethod
     def get_node_no(cls, file_name: str, dir_name) -> int:
@@ -106,7 +115,8 @@ class InodeFileName:
         node_no = cls.get_node_no(file_name, dir_name)
         if node_no != -1:
             Inode.remove_inode(node_no)
-            cls.node_name_table[dir_name].remove((TYPE_FILE, file_name, node_no))
+            cls.node_name_table[dir_name].remove(
+                (TYPE_FILE, file_name, node_no))
             return 0
         else:
             return -1
@@ -126,7 +136,6 @@ def create_file(file_type: str, file_name: str, dir_name) -> int:
     if InodeFileName.get_node_no(file_name, dir_name) != -1:
         return -1
     else:
-        print(dir_name)
         inode_file = InodeFileName(file_name, file_type, dir_name)
         return inode_file.inode_no
 
@@ -167,7 +176,7 @@ def store_file(file_name: str, dir_name, block_size=0):
     buffer = 'A writing test.' * 10
 
     node_no = InodeFileName.get_node_no(file_name, dir_name)
-    new_blocks = []
+    # new_blocks = []
     block_contents_dict = {}
     if node_no != -1:
         # allocate more file blocks
@@ -183,18 +192,20 @@ def store_file(file_name: str, dir_name, block_size=0):
             first_seg = 64 - inode.file_size % 64
             # construct dict
             if first_seg > 0:
-                new_blocks.append(inode.block_allocation[-new_block_allocation - 1])
-                block_contents_dict[inode.block_allocation[-new_block_allocation - 1]] = buffer[0:first_seg]
+                # new_blocks.append(inode.block_allocation[-new_block_allocation - 1])
+                block_contents_dict[inode.block_allocation[-new_block_allocation - 1]
+                                    ] = buffer[0:first_seg]
             for b in inode.block_allocation[-new_block_allocation:-1]:
-                new_blocks.append(b)
+                # new_blocks.append(b)
                 block_contents_dict[b] = buffer[first_seg:first_seg + 64]
                 first_seg += 64
-            new_blocks.append(inode.block_allocation[-1])
-            block_contents_dict[inode.block_allocation[-1]] = buffer[first_seg:]
+            # new_blocks.append(inode.block_allocation[-1])
+            block_contents_dict[inode.block_allocation[-1]
+                                ] = buffer[first_seg:]
             # store_buffer_into()
         inode.file_size += len(buffer)
     # reallocate blocks for file
-    return new_blocks, block_contents_dict
+    return block_contents_dict
 
 
 def change_file_name(file_name: str, new_file_name: str, dir_name) -> int:
@@ -206,8 +217,10 @@ def change_file_name(file_name: str, new_file_name: str, dir_name) -> int:
     #
     node_no = InodeFileName.get_node_no(file_name, dir_name)
     if node_no != -1:
-        InodeFileName.node_name_table[dir_name].remove((TYPE_FILE, file_name, node_no))
-        InodeFileName.node_name_table[dir_name].append((TYPE_FILE, new_file_name, node_no))
+        InodeFileName.node_name_table[dir_name].remove(
+            (TYPE_FILE, file_name, node_no))
+        InodeFileName.node_name_table[dir_name].append(
+            (TYPE_FILE, new_file_name, node_no))
     return node_no
 
 
@@ -264,7 +277,8 @@ def change_dir_name(dir_name: str, new_dir_name: str, parent_dir):
 
         old_dir_content = InodeFileName.node_name_table[parent_dir + dir_name + '/']
         InodeFileName.node_name_table.pop(parent_dir + dir_name + '/')
-        InodeFileName.node_name_table[parent_dir + new_dir_name + '/'] = old_dir_content.copy()
+        InodeFileName.node_name_table[parent_dir +
+                                      new_dir_name + '/'] = old_dir_content.copy()
         return 1
     return -1
 
@@ -349,7 +363,8 @@ def deal_message(message):
                 file_type = message[4]
                 file_name = message[5]
                 ret_message.append(file_name)  # file_name
-                res = create_file(file_type, file_name, InodeFileName.pwd_name)  # create_res
+                res = create_file(file_type, file_name,
+                                  InodeFileName.pwd_name)  # create_res
                 if res != -1:
                     ret_message.append('succeed')
                 else:
@@ -368,7 +383,8 @@ def deal_message(message):
                 file_name = message[4]
                 ret_message.append(file_name)  # filename
                 new_file_name = message[5]
-                res = change_file_name(file_name, new_file_name, InodeFileName.pwd_name)
+                res = change_file_name(
+                    file_name, new_file_name, InodeFileName.pwd_name)
                 if res != -1:
                     ret_message.append('succeed')  # change_res
                 else:
@@ -408,7 +424,8 @@ def deal_message(message):
                 dir_name = message[4]
                 ret_message.append(dir_name)
                 new_dir_name = message[5]
-                res = change_dir_name(dir_name, new_dir_name, InodeFileName.pwd_name)
+                res = change_dir_name(
+                    dir_name, new_dir_name, InodeFileName.pwd_name)
                 if res != -1:
                     ret_message.append('succeed')
                 else:
@@ -420,18 +437,20 @@ def deal_message(message):
                 pid = message[7]
                 using_time = message[8]
                 write_type = ''
-                block_list = []
+                # block_list = []
                 block_contents_dict = {}
-                node_no = InodeFileName.get_node_no(file_name, InodeFileName.pwd_name)
+                node_no = InodeFileName.get_node_no(
+                    file_name, InodeFileName.pwd_name)
                 if node_no != -1:
                     inode = Inode.get_inode(node_no)
                     if inode.file_size == 0:
                         write_type = 'cover'
                     else:
                         write_type = 'add'
-                    block_list, block_contents_dict = store_file(file_name, InodeFileName.pwd_name)
-                ret_message = send_write_message(file_name, pid, using_time, write_type, block_list,
-                                                 block_contents_dict)
+                    block_contents_dict = store_file(
+                        file_name, InodeFileName.pwd_name)
+                ret_message = send_write_message(
+                    file_name, pid, using_time, write_type, block_contents_dict)
         elif message[1] == HEAD_KERNEL and message[2] == HEAD_FS:
             if message[3] == 'LOAD_FILE':
                 load_type = message[4]
@@ -440,12 +459,15 @@ def deal_message(message):
                 pid = message[7]
                 using_time = message[8]
                 block_list = []
-                node_no = InodeFileName.get_node_no(file_name, InodeFileName.pwd_name)
+                node_no = InodeFileName.get_node_no(
+                    file_name, InodeFileName.pwd_name)
                 if node_no != -1:
                     inode = Inode.get_inode(node_no)
                     if not (load_type == 'EXEC' and inode.file_type == 'COMMON'):
-                        block_list = read_file(file_name, InodeFileName.pwd_name)
-                ret_message = send_load_message(load_type, file_name, ui_pid, pid, using_time, block_list)
+                        block_list = read_file(
+                            file_name, InodeFileName.pwd_name)
+                ret_message = send_load_message(
+                    load_type, file_name, ui_pid, pid, using_time, block_list)
             elif message[3] == 'WRITE_FILE':
                 file_name = message[4]
                 size = message[5]
@@ -453,38 +475,71 @@ def deal_message(message):
                 pid = message[7]
                 using_time = message[8]
                 write_type = ''
-                block_list = []
+                # block_list = []
                 block_contents_dict = {}
-                node_no = InodeFileName.get_node_no(file_name, InodeFileName.pwd_name)
+                node_no = InodeFileName.get_node_no(
+                    file_name, InodeFileName.pwd_name)
                 if node_no != -1:
                     inode = Inode.get_inode(node_no)
                     if inode.file_size == 0:
                         write_type = 'cover'
                     else:
                         write_type = 'add'
-                    block_list, block_contents_dict = store_file(file_name, InodeFileName.pwd_name)
-                ret_message = send_write_message(file_name, pid, using_time, write_type, block_list,
-                                                 block_contents_dict)
+                    block_contents_dict = store_file(
+                        file_name, InodeFileName.pwd_name)
+                ret_message = send_write_message(
+                    file_name, pid, using_time, write_type, block_contents_dict)
+            elif message[3] == 'SHUTDOWN':
+                store_before_end()
+                ret_message = [HEAD_RES, HEAD_FS,
+                               HEAD_KERNEL, 'SHUTDOWN', 'succeed']
     return ret_message
 
 
 def send_load_message(type_str, file_name, ui_pid, pid, read_time, block_list):
-    message = [HEAD_REQ, HEAD_FS, HEAD_MEMORY, 'LOAD', type_str, file_name, ui_pid, pid, read_time, block_list]
+    message = [HEAD_REQ, HEAD_FS, HEAD_MEMORY, 'LOAD',
+               type_str, file_name, ui_pid, pid, read_time, block_list]
     return message
 
 
-def send_write_message(file_name, pid, write_time, write_type, block_list, block_contents_dict):
-    message = [HEAD_REQ, HEAD_FS, HEAD_MEMORY, 'WRITE', file_name, pid, write_time, write_type, block_list,
-               block_contents_dict]
+def send_write_message(file_name, pid, write_time, write_type, block_contents_dict):
+    message = [HEAD_REQ, HEAD_FS, HEAD_MEMORY, 'WRITE', file_name,
+               pid, write_time, write_type, block_contents_dict]
     return message
 
 
-def init_before_start():
-    pass
+def init_before_start(node_name_table_file='node_name_table.json', node_table_file='node_table.json'):
+    with open(node_name_table_file, 'r', encoding='utf-8') as f:
+        node_name_dict = json.load(f)
+    max_node_no = 2
+    for dir_name, contents in node_name_dict.items():
+        for content in contents:
+            if len(content) == 3 and content[2] > max_node_no:
+                max_node_no = content[2]
+            InodeFileName.node_name_table[dir_name].append(tuple(content))
+    InodeFileName.starting_node_no = max_node_no
+
+    with open(node_table_file, 'r', encoding='utf-8') as f:
+        node_table_dict = json.load(f)
+        for k, v in node_table_dict.items():
+            node_no = int(k)
+            file_size = int(v[0])
+            file_type = v[1]
+            block_allocation = v[2]
+            Inode.node_table[node_no] = Inode(
+                file_type, file_size, block_allocation)
+        # for k, v in Inode.node_table.items():
+        #     print(str(k) + ':(' + str(v.file_size) + ',' + str(v.file_type) + ',' + str(v.block_allocation) + ')')
 
 
-def store_before_end():
-    pass
+def store_before_end(node_name_table_file='node_name_table.json', node_table_file='node_table.json'):
+    with open(node_name_table_file, 'w+', encoding='utf-8') as f:
+        json.dump(InodeFileName.node_name_table, f)
+    with open(node_table_file, 'w+', encoding='utf-8') as f:
+        node_table_dict = {}
+        for k, v in Inode.node_table.items():
+            node_table_dict[k] = (v.file_size, v.file_type, v.block_allocation)
+        json.dump(node_table_dict, f)
 
 
 def start_fs(kernel2fs, fs2kernel):
@@ -492,10 +547,11 @@ def start_fs(kernel2fs, fs2kernel):
     while True:
         while not kernel2fs.empty():
             message = kernel2fs.get()
-            ret_message = deal_message(message)
             print(InodeFileName.node_name_table)
             print(InodeFileName.pwd_name)
             for k, v in Inode.node_table.items():
-                print(str(k) + ':(' + str(v.file_size) + ',' + str(v.file_type) + ',' + str(v.block_allocation) + ')')
+                print(str(k) + ':(' + str(v.file_size) + ',' +
+                      str(v.file_type) + ',' + str(v.block_allocation) + ')')
             print()
+            ret_message = deal_message(message)
             fs2kernel.put(ret_message)
